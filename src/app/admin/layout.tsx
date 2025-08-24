@@ -180,7 +180,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="fixed inset-y-0 left-0 w-64 bg-card border-r">
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-semibold">Admin Panel</h1>
+              <h1 className="text-lg font-semibold">LogAllot Admin Panel</h1>
               <Button
                 variant="ghost"
                 size="sm"
@@ -216,8 +216,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:block lg:border-r">
         <div className="p-4 border-b">
-          <h1 className="text-lg font-semibold">Admin Panel</h1>
-          <p className="text-sm text-muted-foreground">Provision Error Log Analysis</p>
+          <h1 className="text-lg font-semibold">LogAllot Admin Panel</h1>
+          <p className="text-sm text-muted-foreground">LogAllot Provision Error Log Analysis</p>
         </div>
         <nav className="p-4 space-y-2">
           {navigation.map((item) => {

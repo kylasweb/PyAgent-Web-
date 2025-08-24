@@ -2,7 +2,7 @@
 
 ## Overview
 
-PyAgent-Web now supports multiple AI providers, including several **completely free** options! Configure your preferred AI service for error log analysis.
+LogAllot Provision Error Log Analysis now supports multiple AI providers, including several **completely free** options! Configure your preferred AI service for error log analysis.
 
 ## 🆓 Free AI Providers
 
@@ -200,7 +200,7 @@ Use the **Test** button next to each API key to verify:
 1. Go to [groq.com](https://groq.com)
 2. Sign up (free)
 3. Generate API key
-4. In PyAgent-Web: Admin → Settings → AI Config
+4. In LogAllot: Admin → Settings → AI Config
 5. Select "Groq" as provider
 6. Enter API key
 7. Select "llama-3.1-70b-versatile" model

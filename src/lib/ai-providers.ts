@@ -224,7 +224,7 @@ class AIProviderService {
                 'Authorization': `Bearer ${config.apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': 'https://your-app.com',
-                'X-Title': 'PyAgent-Web',
+                'X-Title': 'LogAllot',
             },
             body: JSON.stringify({
                 model: config.model,

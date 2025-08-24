@@ -42,7 +42,7 @@ interface SettingsByCategory {
 
 const defaultSettings = {
   general: [
-    { key: 'app_name', value: 'Provision Error Log Analysis', description: 'Application name', type: 'string' as const },
+    { key: 'app_name', value: 'LogAllot Provision Error Log Analysis', description: 'Application name', type: 'string' as const },
     { key: 'max_file_size', value: 10485760, description: 'Maximum file upload size in bytes', type: 'number' as const },
   ],
   features: [
@@ -303,7 +303,7 @@ export default function SystemSettings() {
     // Special handling for model selection
     if (setting.key.includes('_model')) {
       const provider = setting.key.split('_')[0];
-      let options = [];
+      let options: Array<{ value: string; label: string }> = [];
       
       switch (provider) {
         case 'openai':

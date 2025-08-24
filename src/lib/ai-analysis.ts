@@ -71,9 +71,8 @@ async function analyzeIssueType(analysisResponse: string): Promise<{ isIntermitt
 // Function to perform contextual analysis (Step 1)
 async function contextualAugmentation(logContent: string): Promise<ContextualAnalysis> {
   try {
-    const zai = await ZAI.create();
-
-    const prompt = `
+    const analysisResult = await aiProviderService.analyzeWithAI({
+      prompt: `
     Analyze the following log content and extract key information:
     
     Log Content:
@@ -90,24 +89,12 @@ async function contextualAugmentation(logContent: string): Promise<ContextualAna
       }
     
     Return only valid JSON.
-    `;
-
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a log analysis expert. Extract structured information from logs and return only valid JSON.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+    `,
       temperature: 0.1,
-      max_tokens: 500
+      maxTokens: 500
     });
 
-    const content = response.choices[0]?.message?.content || '{}';
+    const content = analysisResult.content || '{}';
     return JSON.parse(content);
   } catch (error) {
     console.error('Contextual augmentation failed:', error);
@@ -128,9 +115,8 @@ async function contextualAugmentation(logContent: string): Promise<ContextualAna
 // Grok Agent (Primary)
 async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
-    const zai = await ZAI.create();
-
-    const prompt = `
+    const analysisResult = await aiProviderService.analyzeWithAI({
+      prompt: `
     Act as a senior DevOps engineer and provide a concise, witty root-cause analysis based on your real-time knowledge and current trends. Highlight any potential security vulnerabilities.
     
     Log Content:
@@ -152,26 +138,14 @@ async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis
     - If the issue appears to be a persistent bug or code issue, indicate that this will need a fix
     
     Keep it concise but comprehensive.
-    `;
-
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a witty, real-time DevOps expert with access to public knowledge. Provide concise, insightful analysis with a touch of personality.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+    `,
       temperature: 0.7,
-      max_tokens: 800
+      maxTokens: 800
     });
 
     return {
       agent: 'Grok',
-      response: response.choices[0]?.message?.content || 'Analysis failed',
+      response: analysisResult.content || 'Analysis failed',
       confidence: 0.85, // Primary agent gets higher confidence
       timestamp: new Date().toISOString()
     };
@@ -189,9 +163,8 @@ async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis
 // Gemini Agent (Fallback 1)
 async function geminiAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
-    const zai = await ZAI.create();
-
-    const prompt = `
+    const analysisResult = await aiProviderService.analyzeWithAI({
+      prompt: `
     Act as a methodical troubleshooter. Provide a detailed, step-by-step root-cause analysis, a list of probable causes, and a plan for resolution. Use structured markdown.
     
     Log Content:
@@ -213,26 +186,14 @@ async function geminiAgentAnalysis(logContent: string, context: ContextualAnalys
     - If the issue appears to be a persistent bug or code issue, indicate that this will need a fix
     
     Be thorough and methodical in your approach.
-    `;
-
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a meticulous, methodical researcher. Provide detailed, structured analysis with step-by-step reasoning.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+    `,
       temperature: 0.3,
-      max_tokens: 1000
+      maxTokens: 1000
     });
 
     return {
       agent: 'Gemini',
-      response: response.choices[0]?.message?.content || 'Analysis failed',
+      response: analysisResult.content || 'Analysis failed',
       confidence: 0.75,
       timestamp: new Date().toISOString()
     };
@@ -250,9 +211,8 @@ async function geminiAgentAnalysis(logContent: string, context: ContextualAnalys
 // OpenAI Agent (Fallback 2)
 async function openAIAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
-    const zai = await ZAI.create();
-
-    const prompt = `
+    const analysisResult = await aiProviderService.analyzeWithAI({
+      prompt: `
     Act as an experienced software developer. Provide a summary of the error, a list of possible fixes, and well-commented code snippets to demonstrate a solution.
     
     Log Content:
@@ -278,26 +238,14 @@ async function openAIAgentAnalysis(logContent: string, context: ContextualAnalys
     - If the issue appears to be a persistent bug or code issue, indicate that this will need a fix
     
     Focus on practical, implementable solutions.
-    `;
-
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an experienced software developer. Provide practical solutions with code examples.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+    `,
       temperature: 0.5,
-      max_tokens: 1000
+      maxTokens: 1000
     });
 
     return {
       agent: 'OpenAI',
-      response: response.choices[0]?.message?.content || 'Analysis failed',
+      response: analysisResult.content || 'Analysis failed',
       confidence: 0.70,
       timestamp: new Date().toISOString()
     };
@@ -324,9 +272,8 @@ async function synthesizeAndSelectResponses(responses: AgentResponse[], context:
 
     // If we have at least 2 valid responses, use the selector agent
     if (validResponses.length >= 2) {
-      const zai = await ZAI.create();
-
-      const prompt = `
+      const analysisResult = await aiProviderService.analyzeWithAI({
+        prompt: `
       You are a response selector agent. Compare the following analysis responses and select the best one based on:
       1. Accuracy - How well does it address the actual error?
       2. Clarity - How clear and understandable is the analysis?
@@ -340,24 +287,12 @@ async function synthesizeAndSelectResponses(responses: AgentResponse[], context:
       `).join('\n---\n')}
       
       Return only the name of the best agent (Grok, Gemini, or OpenAI).
-      `;
-
-      const response = await zai.chat.completions.create({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert at selecting the best analysis response. Choose based on accuracy, clarity, and relevance.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
+      `,
         temperature: 0.2,
-        max_tokens: 50
+        maxTokens: 50
       });
 
-      const selectedAgent = response.choices[0]?.message?.content?.trim() || 'Grok';
+      const selectedAgent = analysisResult.content?.trim() || 'Grok';
       const selectedResponse = validResponses.find(r => r.agent.toLowerCase().includes(selectedAgent.toLowerCase())) || validResponses[0];
 
       return selectedResponse;

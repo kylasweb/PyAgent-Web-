@@ -571,7 +571,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">Provision Error Log Analysis</h1>
+          <h1 className="text-4xl font-bold tracking-tight">LogAllot Provision Error Log Analysis</h1>
           <p className="text-xl text-muted-foreground">
             AI-powered DevOps error analysis and debugging platform
           </p>

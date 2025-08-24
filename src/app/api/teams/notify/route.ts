@@ -4,13 +4,13 @@ import { ConnectorService } from '@/lib/connectors';
 
 export async function POST(request: NextRequest) {
   try {
-    const { 
-      analysisId, 
+    const {
+      analysisId,
       notificationType, // 'intermittent' or 'bug'
       connectorId,
-      customMessage 
+      customMessage
     } = await request.json();
-    
+
     if (!analysisId || !notificationType || !connectorId) {
       return NextResponse.json(
         { error: 'Missing required fields: analysisId, notificationType, connectorId' },
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 ${analysis.analysis.substring(0, 500)}${analysis.analysis.length > 500 ? '...' : ''}
 
 ---
-*Sent by Provision Error Log Analysis System*
+*Sent by LogAllot Provision Error Log Analysis System*
       `;
     } else {
       title = '🐛 Bug Detected - Code Fix Required';
@@ -115,7 +115,7 @@ ${analysis.analysis.substring(0, 500)}${analysis.analysis.length > 500 ? '...' :
 ${analysis.analysis.substring(0, 500)}${analysis.analysis.length > 500 ? '...' : ''}
 
 ---
-*Sent by Provision Error Log Analysis System*
+*Sent by LogAllot Provision Error Log Analysis System*
       `;
     }
 
@@ -129,12 +129,12 @@ ${analysis.analysis.substring(0, 500)}${analysis.analysis.length > 500 ? '...' :
         action: 'SEND_TEAMS_NOTIFICATION',
         entityType: 'Analysis',
         entityId: analysisId,
-        newValues: JSON.stringify({ 
+        newValues: JSON.stringify({
           notificationType,
           connectorId,
           channel,
           title,
-          messageLength: message.length 
+          messageLength: message.length
         }),
         ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown'
@@ -144,14 +144,14 @@ ${analysis.analysis.substring(0, 500)}${analysis.analysis.length > 500 ? '...' :
     // Update connector last used timestamp
     await db.connector.update({
       where: { id: connectorId },
-      data: { 
+      data: {
         lastUsed: new Date().toISOString(),
         updatedAt: new Date()
       }
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       message: 'Notification sent successfully',
       notificationType,
       connector: {
