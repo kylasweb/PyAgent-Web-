@@ -1,4 +1,4 @@
-import ZAI from 'z-ai-web-dev-sdk';
+import { aiProviderService } from './ai-providers';
 
 interface AnalysisResult {
   id: string;
@@ -33,8 +33,6 @@ interface ContextualAnalysis {
 // Function to analyze if the issue is intermittent based on AI response
 async function analyzeIssueType(analysisResponse: string): Promise<{ isIntermittent: boolean; needsFix: boolean }> {
   try {
-    const zai = await ZAI.create();
-    
     const prompt = `
     Analyze the following error analysis and determine if the issue is intermittent or requires a fix:
     
@@ -54,23 +52,14 @@ async function analyzeIssueType(analysisResponse: string): Promise<{ isIntermitt
     
     Return only valid JSON.
     `;
-    
-    const response = await zai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          'content': 'You are an expert at analyzing error logs and determining issue types. Return only valid JSON.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+
+    const response = await aiProviderService.analyzeWithAI({
+      prompt,
+      maxTokens: 200,
       temperature: 0.1,
-      max_tokens: 200
     });
-    
-    const content = response.choices[0]?.message?.content || '{"isIntermittent": false, "needsFix": true, "reasoning": "Default analysis"}';
+
+    const content = response.content || '{"isIntermittent": false, "needsFix": true, "reasoning": "Default analysis"}';
     return JSON.parse(content);
   } catch (error) {
     console.error('Issue type analysis failed:', error);
@@ -83,7 +72,7 @@ async function analyzeIssueType(analysisResponse: string): Promise<{ isIntermitt
 async function contextualAugmentation(logContent: string): Promise<ContextualAnalysis> {
   try {
     const zai = await ZAI.create();
-    
+
     const prompt = `
     Analyze the following log content and extract key information:
     
@@ -102,7 +91,7 @@ async function contextualAugmentation(logContent: string): Promise<ContextualAna
     
     Return only valid JSON.
     `;
-    
+
     const response = await zai.chat.completions.create({
       messages: [
         {
@@ -117,7 +106,7 @@ async function contextualAugmentation(logContent: string): Promise<ContextualAna
       temperature: 0.1,
       max_tokens: 500
     });
-    
+
     const content = response.choices[0]?.message?.content || '{}';
     return JSON.parse(content);
   } catch (error) {
@@ -140,7 +129,7 @@ async function contextualAugmentation(logContent: string): Promise<ContextualAna
 async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
     const zai = await ZAI.create();
-    
+
     const prompt = `
     Act as a senior DevOps engineer and provide a concise, witty root-cause analysis based on your real-time knowledge and current trends. Highlight any potential security vulnerabilities.
     
@@ -164,7 +153,7 @@ async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis
     
     Keep it concise but comprehensive.
     `;
-    
+
     const response = await zai.chat.completions.create({
       messages: [
         {
@@ -179,7 +168,7 @@ async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis
       temperature: 0.7,
       max_tokens: 800
     });
-    
+
     return {
       agent: 'Grok',
       response: response.choices[0]?.message?.content || 'Analysis failed',
@@ -201,7 +190,7 @@ async function grokAgentAnalysis(logContent: string, context: ContextualAnalysis
 async function geminiAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
     const zai = await ZAI.create();
-    
+
     const prompt = `
     Act as a methodical troubleshooter. Provide a detailed, step-by-step root-cause analysis, a list of probable causes, and a plan for resolution. Use structured markdown.
     
@@ -225,7 +214,7 @@ async function geminiAgentAnalysis(logContent: string, context: ContextualAnalys
     
     Be thorough and methodical in your approach.
     `;
-    
+
     const response = await zai.chat.completions.create({
       messages: [
         {
@@ -240,7 +229,7 @@ async function geminiAgentAnalysis(logContent: string, context: ContextualAnalys
       temperature: 0.3,
       max_tokens: 1000
     });
-    
+
     return {
       agent: 'Gemini',
       response: response.choices[0]?.message?.content || 'Analysis failed',
@@ -262,7 +251,7 @@ async function geminiAgentAnalysis(logContent: string, context: ContextualAnalys
 async function openAIAgentAnalysis(logContent: string, context: ContextualAnalysis): Promise<AgentResponse> {
   try {
     const zai = await ZAI.create();
-    
+
     const prompt = `
     Act as an experienced software developer. Provide a summary of the error, a list of possible fixes, and well-commented code snippets to demonstrate a solution.
     
@@ -290,7 +279,7 @@ async function openAIAgentAnalysis(logContent: string, context: ContextualAnalys
     
     Focus on practical, implementable solutions.
     `;
-    
+
     const response = await zai.chat.completions.create({
       messages: [
         {
@@ -305,7 +294,7 @@ async function openAIAgentAnalysis(logContent: string, context: ContextualAnalys
       temperature: 0.5,
       max_tokens: 1000
     });
-    
+
     return {
       agent: 'OpenAI',
       response: response.choices[0]?.message?.content || 'Analysis failed',
@@ -328,15 +317,15 @@ async function synthesizeAndSelectResponses(responses: AgentResponse[], context:
   try {
     // Filter out failed responses
     const validResponses = responses.filter(r => r.confidence > 0);
-    
+
     if (validResponses.length === 0) {
       throw new Error('All agents failed to analyze the log');
     }
-    
+
     // If we have at least 2 valid responses, use the selector agent
     if (validResponses.length >= 2) {
       const zai = await ZAI.create();
-      
+
       const prompt = `
       You are a response selector agent. Compare the following analysis responses and select the best one based on:
       1. Accuracy - How well does it address the actual error?
@@ -352,7 +341,7 @@ async function synthesizeAndSelectResponses(responses: AgentResponse[], context:
       
       Return only the name of the best agent (Grok, Gemini, or OpenAI).
       `;
-      
+
       const response = await zai.chat.completions.create({
         messages: [
           {
@@ -367,13 +356,13 @@ async function synthesizeAndSelectResponses(responses: AgentResponse[], context:
         temperature: 0.2,
         max_tokens: 50
       });
-      
+
       const selectedAgent = response.choices[0]?.message?.content?.trim() || 'Grok';
       const selectedResponse = validResponses.find(r => r.agent.toLowerCase().includes(selectedAgent.toLowerCase())) || validResponses[0];
-      
+
       return selectedResponse;
     }
-    
+
     // If only one valid response, return it
     return validResponses[0];
   } catch (error) {
@@ -389,16 +378,16 @@ export async function analyzeLogWithAI(logContent: string, analysisId: string): 
   try {
     // Step 1: Contextual Augmentation
     const context = await contextualAugmentation(logContent);
-    
+
     // Step 2: Parallel Analysis
     const [grokResponse, geminiResponse, openaiResponse] = await Promise.allSettled([
       grokAgentAnalysis(logContent, context),
       geminiAgentAnalysis(logContent, context),
       openAIAgentAnalysis(logContent, context)
     ]);
-    
+
     const responses: AgentResponse[] = [];
-    
+
     if (grokResponse.status === 'fulfilled') {
       responses.push(grokResponse.value);
     }
@@ -408,13 +397,13 @@ export async function analyzeLogWithAI(logContent: string, analysisId: string): 
     if (openaiResponse.status === 'fulfilled') {
       responses.push(openaiResponse.value);
     }
-    
+
     // Step 3: Synthesis & Selection
     const selectedResponse = await synthesizeAndSelectResponses(responses, context);
-    
+
     // Step 4: Analyze issue type
     const issueType = await analyzeIssueType(selectedResponse.response);
-    
+
     return {
       id: analysisId,
       timestamp: new Date().toISOString(),
