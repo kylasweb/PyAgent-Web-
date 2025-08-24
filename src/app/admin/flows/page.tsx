@@ -88,39 +88,51 @@ export default function FlowBuilder() {
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [aiAgents, setAiAgents] = useState<any[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Fetch flows from API
+  // Fetch flows and AI agents from API
   useEffect(() => {
-    const fetchFlows = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/flows');
-        if (!response.ok) {
-          throw new Error('Failed to fetch flows');
-        }
-        const data = await response.json();
-        setFlows(data);
-        if (data.length > 0) {
-          setSelectedFlow(data[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching flows:', error);
-        toast({
-          title: "Failed to load flows",
-          description: "Unable to fetch flows from the server. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchFlows();
-  }, [toast]);
+    fetchAIAgents();
+  }, []);
 
-  const handleCreateFlow = async () => {
+  const fetchAIAgents = async () => {
+    try {
+      const response = await fetch('/api/agents?userId=default-user');
+      if (response.ok) {
+        const data = await response.json();
+        setAiAgents(data.agents || []);
+      }
+    } catch (error) {
+      console.error('Failed to load AI agents:', error);
+    }
+  };
+
+  const fetchFlows = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/flows');
+      if (!response.ok) {
+        throw new Error('Failed to fetch flows');
+      }
+      const data = await response.json();
+      setFlows(data);
+      if (data.length > 0) {
+        setSelectedFlow(data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching flows:', error);
+      toast({
+        title: "Failed to load flows",
+        description: "Unable to fetch flows from the server. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };  const handleCreateFlow = async () => {
     if (!newFlowName.trim()) {
       toast({
         title: "Flow name required",

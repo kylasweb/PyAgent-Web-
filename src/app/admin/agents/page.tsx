@@ -27,17 +27,20 @@ import { useToast } from '@/hooks/use-toast';
 
 interface AIAgent {
   id: string;
+  userId: string;
   name: string;
-  description: string;
+  description?: string;
+  type: string; // analyzer, classifier, predictor, summarizer, custom
   provider: string;
   model: string;
-  systemPrompt: string;
+  prompt: string;
   temperature: number;
   maxTokens: number;
   isActive: boolean;
-  createdAt: string;
   lastUsed?: string;
   usageCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const AI_PROVIDERS = [
@@ -49,6 +52,14 @@ const AI_PROVIDERS = [
   { value: 'mistral', label: 'Mistral AI' },
   { value: 'cohere', label: 'Cohere' },
   { value: 'zai', label: 'Z.ai' },
+];
+
+const AGENT_TYPES = [
+  { value: 'analyzer', label: 'Analyzer' },
+  { value: 'classifier', label: 'Classifier' },
+  { value: 'predictor', label: 'Predictor' },
+  { value: 'summarizer', label: 'Summarizer' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 const MODELS_BY_PROVIDER = {
@@ -72,9 +83,10 @@ export default function AIAgentsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    type: 'analyzer',
     provider: 'groq',
     model: 'llama-3.1-70b-versatile',
-    systemPrompt: '',
+    prompt: '',
     temperature: 0.3,
     maxTokens: 2000,
     isActive: true,
