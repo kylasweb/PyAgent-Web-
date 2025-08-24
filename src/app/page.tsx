@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, FileText, Brain, Github, ExternalLink, MessageSquare, Loader2, Key, Settings } from 'lucide-react';
+import { Upload, FileText, Brain, Github, ExternalLink, MessageSquare, Loader2, Key, Settings, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AnalysisResult {
@@ -808,6 +808,19 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Floating Admin Access Button */}
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className="fixed bottom-6 right-6 h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 shadow-lg hover:bg-muted/80 hover:border-border transition-all duration-200 opacity-30 hover:opacity-100"
+        title="Admin Access"
+      >
+        <a href="/admin">
+          <Shield className="h-4 w-4 text-muted-foreground" />
+        </a>
+      </Button>
     </div>
   );
 }
