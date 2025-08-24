@@ -1,5 +1,6 @@
 // AI Provider Service - Supports multiple AI providers including free ones
 import { db } from './db';
+import { getEdgeConfig, getAIProviderConfig } from './edge-config';
 
 export interface AIProviderConfig {
     provider: string;
@@ -31,31 +32,63 @@ export interface AIAnalysisResponse {
 
 class AIProviderService {
     private async getProviderConfig(provider?: string): Promise<AIProviderConfig> {
-        // Get AI settings from database
-        const settings = await db.systemSetting.findMany({
-            where: {
-                key: {
-                    startsWith: 'ai_'
+        try {
+            // Get AI settings from database first
+            const settings = await db.systemSetting.findMany({
+                where: {
+                    key: {
+                        startsWith: 'ai_'
+                    }
                 }
+            });
+
+            const config: any = {};
+            settings.forEach(setting => {
+                config[setting.key] = setting.value;
+            });
+
+            // If database is empty or missing, fallback to Edge Config
+            if (Object.keys(config).length === 0) {
+                console.log('Database settings empty, using Edge Config...');
+                const edgeConfigData = await getAIProviderConfig();
+                const activeProvider = provider || edgeConfigData.primaryProvider || 'groq';
+
+                return {
+                    provider: activeProvider,
+                    apiKey: edgeConfigData.providers[activeProvider]?.apiKey || '',
+                    model: edgeConfigData.providers[activeProvider]?.model || this.getDefaultModel(activeProvider),
+                    baseUrl: this.getDefaultBaseUrl(activeProvider),
+                    temperature: edgeConfigData.temperature || 0.3,
+                    maxTokens: edgeConfigData.maxTokens || 2000,
+                    timeout: edgeConfigData.timeout || 30000,
+                };
             }
-        });
 
-        const config: any = {};
-        settings.forEach(setting => {
-            config[setting.key] = setting.value;
-        });
+            const activeProvider = provider || config.ai_provider || 'groq';
 
-        const activeProvider = provider || config.ai_provider || 'groq';
-
-        return {
-            provider: activeProvider,
-            apiKey: config[`${activeProvider}_api_key`] || '',
-            model: config[`${activeProvider}_model`] || this.getDefaultModel(activeProvider),
-            baseUrl: config[`${activeProvider}_base_url`] || this.getDefaultBaseUrl(activeProvider),
-            temperature: config.ai_temperature || 0.3,
-            maxTokens: config.ai_max_tokens || 2000,
-            timeout: config.ai_timeout || 30000,
-        };
+            return {
+                provider: activeProvider,
+                apiKey: config[`${activeProvider}_api_key`] || '',
+                model: config[`${activeProvider}_model`] || this.getDefaultModel(activeProvider),
+                baseUrl: config[`${activeProvider}_base_url`] || this.getDefaultBaseUrl(activeProvider),
+                temperature: config.ai_temperature || 0.3,
+                maxTokens: config.ai_max_tokens || 2000,
+                timeout: config.ai_timeout || 30000,
+            };
+        } catch (error) {
+            console.error('Error getting provider config:', error);
+            // Ultimate fallback to environment variables
+            const activeProvider = provider || 'groq';
+            return {
+                provider: activeProvider,
+                apiKey: process.env[`${activeProvider.toUpperCase()}_API_KEY`] || '',
+                model: this.getDefaultModel(activeProvider),
+                baseUrl: this.getDefaultBaseUrl(activeProvider),
+                temperature: 0.3,
+                maxTokens: 2000,
+                timeout: 30000,
+            };
+        }
     }
 
     private getDefaultModel(provider: string): string {

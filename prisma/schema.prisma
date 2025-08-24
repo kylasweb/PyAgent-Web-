@@ -11,6 +11,9 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+  // For production deployment, use PostgreSQL:
+  // provider = "postgresql"
+  // url      = env("DATABASE_URL")
 }
 
 model User {
@@ -26,9 +29,33 @@ model User {
   auditLogs    AuditLog[]
   connectors   Connector[]
   flows        Flow[]
+  aiAgents     AIAgent[]
   settings     UserSetting[]
   
   @@map("users")
+}
+
+model AIAgent {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        String   // analyzer, classifier, predictor, summarizer, custom
+  provider    String   // groq, openai, huggingface, etc.
+  model       String
+  prompt      String
+  temperature Float    @default(0.3)
+  maxTokens   Int      @default(2000)
+  isActive    Boolean  @default(true)
+  lastUsed    DateTime?
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("ai_agents")
 }
 
 model Analysis {
