@@ -6,9 +6,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Enable serverless deployment
-  output: 'standalone',
-
   // React strict mode for better development
   reactStrictMode: true,
 
@@ -21,12 +18,6 @@ const nextConfig: NextConfig = {
       };
     }
 
-    // Optimize for serverless
-    config.optimization = {
-      ...config.optimization,
-      minimize: true,
-    };
-
     return config;
   },
 
@@ -37,11 +28,6 @@ const nextConfig: NextConfig = {
 
   // Enable external packages for server components
   serverExternalPackages: ['@prisma/client', 'prisma'],
-
-  // Image optimization for serverless
-  images: {
-    unoptimized: true, // Disable Next.js image optimization for static export
-  },
 
   // Environment variables
   env: {
